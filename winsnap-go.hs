@@ -12,25 +12,21 @@ main = do
     putStrLn . show . winsnap snapsTopLeft $ Rect (a!!0) (a!!1) (a!!2) (a!!3)
 
 
-data Rect = Rect
-    { rectX :: Int
-    , rectY :: Int
-    , rectW :: Int
-    , rectH :: Int
+data Rect a = Rect
+    { rectX :: a
+    , rectY :: a
+    , rectW :: a
+    , rectH :: a
     } deriving (Eq)
 
-type Window = Rect
-type Monitor = Rect
 
-instance Show Rect where
+type Window = Rect Int
+type Monitor = Rect Int
+type SnapConfig = Rect Float
+
+
+instance (Show a) => Show (Rect a) where
     show (Rect x y w h) = concat . intersperse " " . map show $ [x,y,w,h]
-
-data SnapConfig = SnapConfig
-    { snapX :: Float
-    , snapY :: Float
-    , snapW :: Float
-    , snapH :: Float
-    } deriving (Eq)
 
 
 monitors :: [Monitor]
@@ -39,15 +35,12 @@ monitors =
     , Rect 1920    0 2560 1440
     , Rect 4480    0 2560 1440 ]
 
+
 snapsTopLeft :: [SnapConfig]
 snapsTopLeft =
-    [ SnapConfig 0.0 0.0 0.3333 0.5
-    , SnapConfig 0.0 0.0 0.5    0.5
-    , SnapConfig 0.0 0.0 0.6666 0.5 ]
-
-
-rectCenter :: Rect -> (Int, Int)
-rectCenter (Rect x y w h) = (x + w `quot` 2 , y + h `quot` 2)
+    [ Rect 0.0 0.0 0.3333 0.5
+    , Rect 0.0 0.0 0.5    0.5
+    , Rect 0.0 0.0 0.6666 0.5 ]
 
 
 winsnap :: [SnapConfig] -> Window -> Window
@@ -64,7 +57,8 @@ whichMonitor :: Window -> [Monitor] -> Maybe Monitor
 whichMonitor win mons =
     listToMaybe $ filter onMon mons
   where
-    (wx, wy) = rectCenter win
+    rectIntCenter (Rect x y w h) = (x + w `quot` 2 , y + h `quot` 2)
+    (wx, wy) = rectIntCenter win
     onMon (Rect mx my mw mh) = wx >= mx && wx < mx + mw
                             && wy >= my && wy < my + mh
 
@@ -79,13 +73,12 @@ closestSnap mon snaps win =
 
 
 applySnap :: Monitor -> SnapConfig -> Window -> Window
-applySnap (Rect mx my mw mh) (SnapConfig sx sy sw sh) (Rect wx wy ww wh) =
+applySnap (Rect mx my mw mh) (Rect sx sy sw sh) (Rect wx wy ww wh) =
     Rect x y w h
   where
     x = mx + round ((fromIntegral (wx - mx)) * sx)
     y = my + round ((fromIntegral (wy - my)) * sy)
     w = round ((fromIntegral mw) * sw)
     h = round ((fromIntegral mh) * sh)
-
 
 
