@@ -9,7 +9,7 @@ import System.Environment (getArgs)
 main :: IO ()
 main = do
     a <- liftM (map read) getArgs
-    putStrLn . show . winsnap snapsTopLeft $ Rect (a!!0) (a!!1) (a!!2) (a!!3)
+    putStrLn . show . winsnap snapsBottomRight $ Rect (a!!0) (a!!1) (a!!2) (a!!3)
 
 
 data Rect a = Rect
@@ -41,7 +41,11 @@ snapsTopLeft =
     [ Rect 0.0 0.0 0.3333 0.5
     , Rect 0.0 0.0 0.5    0.5
     , Rect 0.0 0.0 0.6666 0.5 ]
-
+snapsBottomRight :: [SnapConfig]
+snapsBottomRight =
+    [ Rect 0.6666 0.5 0.3333 0.5
+    , Rect 0.5    0.5 0.5    0.5
+    , Rect 0.3333 0.5 0.6666 0.5 ]
 
 winsnap :: [SnapConfig] -> Window -> Window
 winsnap snaps win = applySnap mon newSnap win
@@ -76,8 +80,8 @@ applySnap :: Monitor -> SnapConfig -> Window -> Window
 applySnap (Rect mx my mw mh) (Rect sx sy sw sh) (Rect wx wy ww wh) =
     Rect x y w h
   where
-    x = mx + round ((fromIntegral (wx - mx)) * sx)
-    y = my + round ((fromIntegral (wy - my)) * sy)
+    x = mx + round ((fromIntegral mw) * sx)
+    y = my + round ((fromIntegral mh) * sy)
     w = round ((fromIntegral mw) * sw)
     h = round ((fromIntegral mh) * sh)
 
