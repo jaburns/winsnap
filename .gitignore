@@ -1,4 +1,5 @@
 dist
+winsnap-go
 cabal-dev
 *.o
 *.hi

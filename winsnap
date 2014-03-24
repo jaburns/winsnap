@@ -3,8 +3,6 @@
 # Get the winsnap folder
 dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-echo $dir
-
 # Get the active window ID
 win=$(xdotool getactivewindow)
 
