@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+# Get the winsnap folder
+dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+echo $dir
+
+# Get the active window ID
+win=$(xdotool getactivewindow)
+
+# Determine the size and position of the active window.
+parse_win_data () {
+    local x=$(( $1 - $3 ))
+    local y=$(( $2 - $4 ))
+    echo "$x $y $5 $6"
+}
+windata=$(parse_win_data $(xwininfo -id "$win" \
+    | grep -E "upper-left|Width:|Height:" | cut -d: -f2 | xargs echo))
+
+# Invoke the winsnap-go program with our window geometry, then move it.
+move_win () {
+    xdotool windowmove "$win" $1 $2
+    xdotool windowsize "$win" $3 $4
+}
+newdata=$($dir/winsnap-go $windata)
+move_win $newdata
