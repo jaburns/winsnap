@@ -46,6 +46,7 @@ snapConfigs =
       , Rect 0.0 0.0 0.6666 0.5 ]
     -- Top Center
     , [ Rect 0.0    0.0 1.0    0.5
+      , Rect 0.25   0.0 0.5    0.5
       , Rect 0.3333 0.0 0.3333 0.5 ]
     -- Top Right
     , [ Rect 0.6666 0.0 0.3333 0.5
@@ -57,6 +58,7 @@ snapConfigs =
       , Rect 0.0 0.0 0.6666 1.0 ]
     -- Center Center
     , [ Rect 0.0    0.0 1.0    1.0
+      , Rect 0.25   0.0 0.5    1.0
       , Rect 0.3333 0.0 0.3333 1.0 ]
     -- Center Right
     , [ Rect 0.6666 0.0 0.3333 1.0
@@ -68,6 +70,7 @@ snapConfigs =
       , Rect 0.0 0.5 0.6666 0.5 ]
     -- Bottom Center
     , [ Rect 0.0    0.5 1.0    0.5
+      , Rect 0.25   0.5 0.5    0.5
       , Rect 0.3333 0.5 0.3333 0.5 ]
     -- Bottom Right
     , [ Rect 0.6666 0.5 0.3333 0.5
