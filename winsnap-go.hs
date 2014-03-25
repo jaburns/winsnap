@@ -9,7 +9,8 @@ import System.Environment (getArgs)
 main :: IO ()
 main = do
     a <- liftM (map read) getArgs
-    putStrLn . show . winsnap snapsBottomRight $ Rect (a!!0) (a!!1) (a!!2) (a!!3)
+    putStrLn . show . winsnap (snapConfigs !! (a!!0))
+        $ Rect (a!!1) (a!!2) (a!!3) (a!!4)
 
 
 data Rect a = Rect
@@ -29,23 +30,51 @@ instance (Show a) => Show (Rect a) where
     show (Rect x y w h) = concat . intersperse " " . map show $ [x,y,w,h]
 
 
+
 monitors :: [Monitor]
 monitors =
-    [ Rect    0  360 1920 1080
-    , Rect 1920    0 2560 1440
-    , Rect 4480    0 2560 1440 ]
+    [ Rect    0  360 1920 (1080 - 24)
+    , Rect 1920    0 2560 (1440 - 24)
+    , Rect 4480    0 2560 (1440 - 24) ]
 
 
-snapsTopLeft :: [SnapConfig]
-snapsTopLeft =
-    [ Rect 0.0 0.0 0.3333 0.5
-    , Rect 0.0 0.0 0.5    0.5
-    , Rect 0.0 0.0 0.6666 0.5 ]
-snapsBottomRight :: [SnapConfig]
-snapsBottomRight =
-    [ Rect 0.6666 0.5 0.3333 0.5
-    , Rect 0.5    0.5 0.5    0.5
-    , Rect 0.3333 0.5 0.6666 0.5 ]
+snapConfigs :: [[SnapConfig]]
+snapConfigs =
+    -- Top Left
+    [ [ Rect 0.0 0.0 0.3333 0.5
+      , Rect 0.0 0.0 0.5    0.5
+      , Rect 0.0 0.0 0.6666 0.5 ]
+    -- Top Center
+    , [ Rect 0.0    0.0 1.0    0.5
+      , Rect 0.3333 0.0 0.3333 0.5 ]
+    -- Top Right
+    , [ Rect 0.6666 0.0 0.3333 0.5
+      , Rect 0.5    0.0 0.5    0.5
+      , Rect 0.3333 0.0 0.6666 0.5 ]
+    -- Center Left
+    , [ Rect 0.0 0.0 0.3333 1.0
+      , Rect 0.0 0.0 0.5    1.0
+      , Rect 0.0 0.0 0.6666 1.0 ]
+    -- Center Center
+    , [ Rect 0.0    0.0 1.0    1.0
+      , Rect 0.3333 0.0 0.3333 1.0 ]
+    -- Center Right
+    , [ Rect 0.6666 0.0 0.3333 1.0
+      , Rect 0.5    0.0 0.5    1.0
+      , Rect 0.3333 0.0 0.6666 1.0 ]
+    -- Bottom Left
+    , [ Rect 0.0 0.5 0.3333 0.5
+      , Rect 0.0 0.5 0.5    0.5
+      , Rect 0.0 0.5 0.6666 0.5 ]
+    -- Bottom Center
+    , [ Rect 0.0    0.5 1.0    0.5
+      , Rect 0.3333 0.5 0.3333 0.5 ]
+    -- Bottom Right
+    , [ Rect 0.6666 0.5 0.3333 0.5
+      , Rect 0.5    0.5 0.5    0.5
+      , Rect 0.3333 0.5 0.6666 0.5 ] ]
+
+
 
 winsnap :: [SnapConfig] -> Window -> Window
 winsnap snaps win = applySnap mon newSnap win

@@ -20,5 +20,5 @@ move_win () {
     xdotool windowmove "$win" $1 $2
     xdotool windowsize "$win" $3 $4
 }
-newdata=$($dir/winsnap-go $windata)
+newdata=$($dir/winsnap-go $1 $windata)
 move_win $newdata
