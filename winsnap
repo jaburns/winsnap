@@ -8,24 +8,20 @@ win=$(xdotool getactivewindow)
 
 # Determine the size and position of the active window.
 parse_win_data () {
-    local woff=$(( $3 * 2 ))
-    local hoff=$(( $3 + $4 ))
-    echo "$woff $hoff" > ~/shitty-temp
-    local x=$(( $1 - $3 ))
-    local y=$(( $2 - $4 ))
-    local w=$(( $5 + $woff ))
-    local h=$(( $6 + $hoff ))
-    echo "$x $y $5 $6"
+    woff=$(( $3 * 2 ))
+    hoff=$(( $3 + $4 ))
+    x=$(( $1 - $3 ))
+    y=$(( $2 - $4 ))
+    w=$(( $5 + $woff ))
+    h=$(( $6 + $hoff ))
 }
-windata=$(parse_win_data $(xwininfo -id "$win" \
-    | grep -E "upper-left|Width:|Height:" | cut -d: -f2 | xargs echo))
+parse_win_data $(xwininfo -id "$win" \
+    | grep -E "upper-left|Width:|Height:" | cut -d: -f2 | xargs echo)
 
 # Invoke the winsnap-go program with our window geometry, then move it.
 move_win () {
     xdotool windowmove "$win" $1 $2
-    xdotool windowsize "$win" $(($3 - $5)) $(($4 - $6))
+    xdotool windowsize "$win" $(($3 - $woff)) $(($4 - $hoff))
 }
-newdata=$($dir/winsnap-go $1 $windata)
-move_win $newdata $(cat ~/shitty-temp)
-rm ~/shitty-temp
-
+newdata=$($dir/winsnap-go $1 $x $y $w $h)
+move_win $newdata
