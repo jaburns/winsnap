@@ -7,26 +7,6 @@ import Data.Maybe (fromJust, listToMaybe)
 import System.Environment (getArgs)
 
 
-main :: IO ()
-main = dispatch `liftM` getArgs >>= putStrLn
-
-
-dispatch :: [String] -> String
-dispatch args = case head args of
-
-    "snap" -> show $ snapNext (snapConfigs!!(ints!!0))
-                   $ Rect (ints!!1) (ints!!2) (ints!!3) (ints!!4)
-
-    "next" -> show $ nextMonitor
-                   $ Rect (ints!!0) (ints!!1) (ints!!2) (ints!!3)
-
-    x -> error $ "Didn't understand command '" ++ x ++ "'"
-
-  where
-    ints :: [Int]
-    ints = map read $ tail args
-
-
 
 data Rect a = Rect
     { rectX :: a
@@ -47,14 +27,12 @@ instance (Show a) => Show (Rect a) where
 panelSize :: Int
 panelSize = 24
 
-
 monitors :: [Monitor]
 monitors = map parseMonitor [
 #include "monitors.txt"
   ]
   where
     parseMonitor (w,h,x,y) = Rect x y w (h - panelSize)
-
 
 snapConfigs :: [[SnapConfig]]
 snapConfigs =
@@ -95,6 +73,25 @@ snapConfigs =
       , Rect 0.5    0.5 0.5    0.5
       , Rect 0.3333 0.5 0.6666 0.5 ] ]
 
+
+
+main :: IO ()
+main = dispatch `liftM` getArgs >>= putStrLn
+
+
+dispatch :: [String] -> String
+dispatch args = case head args of
+
+    "snap" -> show $ snapNext (snapConfigs!!(ints!!0))
+                   $ Rect (ints!!1) (ints!!2) (ints!!3) (ints!!4)
+
+    "next" -> show $ nextMonitor
+                   $ Rect (ints!!0) (ints!!1) (ints!!2) (ints!!3)
+
+    x -> error $ "Didn't understand command '" ++ x ++ "'"
+
+  where
+    ints = map read $ tail args
 
 
 snapNext :: [SnapConfig] -> Window -> Window
