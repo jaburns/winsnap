@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+need () {
+    if ! [[ -x `which $1` ]]; then
+        echo "Missing dependency '$1'"
+        exit
+    fi
+}
+
+need xrandr
+need wmctrl
+need xwininfo
+
+xrandr | grep ' connected' | cut -d\  -f3 \
+    | sed -e 's/[+x]/,/g;s/$/)/;s/^/    (/;$!s/$/,/;' \
+    > monitors.txt
+
+ghc winsnap-go
+

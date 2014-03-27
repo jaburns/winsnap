@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 
 import Control.Monad (liftM)
 import Data.Function (on)
@@ -30,12 +31,16 @@ instance (Show a) => Show (Rect a) where
     show (Rect x y w h) = concat . intersperse " " . map show $ [x,y,w,h]
 
 
+panelSize :: Int
+panelSize = 24
+
 
 monitors :: [Monitor]
-monitors =
-    [ Rect    0  360 1920 (1080 - 24)
-    , Rect 1920    0 2560 (1440 - 24)
-    , Rect 4480    0 2560 (1440 - 24) ]
+monitors = map parseMonitor [
+#include "monitors.txt"
+  ]
+  where
+    parseMonitor (w,h,x,y) = Rect x y w (h - panelSize)
 
 
 snapConfigs :: [[SnapConfig]]
@@ -46,7 +51,7 @@ snapConfigs =
       , Rect 0.0 0.0 0.6666 0.5 ]
     -- Top Center
     , [ Rect 0.0    0.0 1.0    0.5
-      , Rect 0.25   0.0 0.5    0.5
+      , Rect 0.1667 0.0 0.6666 0.5
       , Rect 0.3333 0.0 0.3333 0.5 ]
     -- Top Right
     , [ Rect 0.6666 0.0 0.3333 0.5
@@ -58,7 +63,7 @@ snapConfigs =
       , Rect 0.0 0.0 0.6666 1.0 ]
     -- Center Center
     , [ Rect 0.0    0.0 1.0    1.0
-      , Rect 0.25   0.0 0.5    1.0
+      , Rect 0.1667 0.0 0.6666 1.0
       , Rect 0.3333 0.0 0.3333 1.0 ]
     -- Center Right
     , [ Rect 0.6666 0.0 0.3333 1.0
@@ -70,7 +75,7 @@ snapConfigs =
       , Rect 0.0 0.5 0.6666 0.5 ]
     -- Bottom Center
     , [ Rect 0.0    0.5 1.0    0.5
-      , Rect 0.25   0.5 0.5    0.5
+      , Rect 0.1667 0.5 0.6666 0.5
       , Rect 0.3333 0.5 0.3333 0.5 ]
     -- Bottom Right
     , [ Rect 0.6666 0.5 0.3333 0.5
