@@ -8,10 +8,24 @@ import System.Environment (getArgs)
 
 
 main :: IO ()
-main = do
-    a <- liftM (map read) getArgs
-    putStrLn . show . winsnap (snapConfigs !! (a!!0))
-        $ Rect (a!!1) (a!!2) (a!!3) (a!!4)
+main = dispatch `liftM` getArgs >>= putStrLn
+
+
+dispatch :: [String] -> String
+dispatch args = case head args of
+
+    "snap" -> show $ snapNext (snapConfigs!!(ints!!0))
+                   $ Rect (ints!!1) (ints!!2) (ints!!3) (ints!!4)
+
+    "next" -> show $ nextMonitor
+                   $ Rect (ints!!0) (ints!!1) (ints!!2) (ints!!3)
+
+    x -> error $ "Didn't understand command '" ++ x ++ "'"
+
+  where
+    ints :: [Int]
+    ints = map read $ tail args
+
 
 
 data Rect a = Rect
@@ -21,14 +35,13 @@ data Rect a = Rect
     , rectH :: a
     } deriving (Eq)
 
-
 type Window = Rect Int
 type Monitor = Rect Int
 type SnapConfig = Rect Float
 
-
 instance (Show a) => Show (Rect a) where
     show (Rect x y w h) = concat . intersperse " " . map show $ [x,y,w,h]
+
 
 
 panelSize :: Int
@@ -84,14 +97,18 @@ snapConfigs =
 
 
 
-winsnap :: [SnapConfig] -> Window -> Window
-winsnap snaps win = applySnap mon newSnap win
+snapNext :: [SnapConfig] -> Window -> Window
+snapNext snaps win = applySnap mon newSnap win
   where
     mon = fromJust $ whichMonitor win monitors
     close = closestSnap mon snaps win
     index = fromJust $ elemIndex close snaps
     nextIndex = if index == length snaps - 1 then 0 else index + 1
     newSnap = snaps !! nextIndex
+
+
+nextMonitor :: Window -> Window
+nextMonitor = undefined
 
 
 whichMonitor :: Window -> [Monitor] -> Maybe Monitor
