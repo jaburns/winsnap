@@ -7,6 +7,7 @@ need () {
     fi
 }
 
+need ghc
 need xrandr
 need wmctrl
 need xwininfo
