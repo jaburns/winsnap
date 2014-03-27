@@ -26,4 +26,4 @@ move_win () {
     h=$(($4 - $hoff))
     wmctrl -i -r "$win" -e "0,$x,$y,$w,$h"
 }
-move_win $($dir/winsnap-go $1 $x $y $w $h)
+move_win $($dir/winsnap-go snap $1 $x $y $w $h)
