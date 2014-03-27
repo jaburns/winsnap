@@ -4,7 +4,7 @@
 dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Get the active window ID
-win=$(xdotool getactivewindow)
+win=$(xprop -root 32x '\t$0' _NET_ACTIVE_WINDOW | cut -f2)
 
 # Determine the size and position of the active window.
 parse_win_data () {
@@ -20,8 +20,11 @@ parse_win_data $(xwininfo -id "$win" \
 
 # Invoke the winsnap-go program with our window geometry, then move it.
 move_win () {
-    xdotool windowmove "$win" $1 $2
-    xdotool windowsize "$win" $(($3 - $woff)) $(($4 - $hoff))
+    x=$1
+    y=$2
+    w=$(($3 - $woff))
+    h=$(($4 - $hoff))
+    wmctrl -i -r "$win" -e "0,$x,$y,$w,$h"
 }
 newdata=$($dir/winsnap-go $1 $x $y $w $h)
 move_win $newdata
