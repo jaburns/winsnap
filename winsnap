@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
-# Get the winsnap folder
 dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# Get the active window ID
-win=$(xprop -root 32x '\t$0' _NET_ACTIVE_WINDOW | cut -f2)
+get_win_data () {
+    parse_win_data $(xwininfo -id "$1" \
+        | grep -E "upper-left|Width:|Height:" | cut -d: -f2 | xargs echo)
+}
 
-# Determine the size and position of the active window.
 parse_win_data () {
     woff=$(( $3 * 2 ))
     hoff=$(( $3 + $4 ))
@@ -15,15 +15,52 @@ parse_win_data () {
     w=$(( $5 + $woff ))
     h=$(( $6 + $hoff ))
 }
-parse_win_data $(xwininfo -id "$win" \
-    | grep -E "upper-left|Width:|Height:" | cut -d: -f2 | xargs echo)
 
-# Invoke the winsnap-go program with our window geometry, then move it.
 move_win () {
-    x=$1
-    y=$2
-    w=$(($3 - $woff))
-    h=$(($4 - $hoff))
-    wmctrl -i -r "$win" -e "0,$x,$y,$w,$h"
+    get_win_data "$1"
+    local nx=$2
+    local ny=$3
+    local nw=$(($4 - $woff))
+    local nh=$(($5 - $hoff))
+    wmctrl -i -r "$1" -e "0,$nx,$ny,$nw,$nh"
 }
-move_win $($dir/winsnap-go $1 $2 $x $y $w $h)
+
+do_snap_or_next () {
+    local win=$(xprop -root 32x '\t$0' _NET_ACTIVE_WINDOW | cut -f2)
+    get_win_data "$win"
+    move_win "$win" $($dir/winsnap-go $1 $2 $x $y $w $h)
+}
+
+get_swap_params () {
+    local wins=$(wmctrl -l | grep -v -E "Desktop|xfce4-panel" | awk '{print $1":"$2}')
+    for win in $wins; do
+        local data=($(echo $win | sed 's/:/ /'))
+        get_win_data "${data[0]}"
+        printf " ${data[0]} ${data[1]} $x $y $w $h"
+    done
+    echo ""
+}
+
+do_swap () {
+    local params=$(get_swap_params)
+    local new_data=$($dir/winsnap-go swap $params)
+    echo "$new_data"
+}
+
+case "$1" in
+    snap)
+        do_snap_or_next $1 $2
+        ;;
+    next)
+        do_snap_or_next $1 $2
+        ;;
+    swap)
+        do_swap
+        ;;
+esac
+
+
+
+
+
+

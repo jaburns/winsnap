@@ -107,6 +107,8 @@ dispatch args = case head args of
     "next" -> show $ nextMonitor monitors
                    $ Rect (ints!!0) (ints!!1) (ints!!2) (ints!!3)
 
+    "swap" -> show args
+
     x -> error $ "Didn't understand command '" ++ x ++ "'"
 
   where
