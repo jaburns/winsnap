@@ -3,11 +3,12 @@
 import Control.Monad (liftM)
 import Data.Function (on)
 import Data.List (intersperse, sortBy, elemIndex)
-import Data.Maybe (fromJust, listToMaybe)
+import Data.Maybe (fromJust, listToMaybe, fromMaybe)
 import System.Environment (getArgs)
 
+--------------------------------------------------------------------------------
 
-
+-- Basic rectangle data type
 data Rect a = Rect
     { rectX :: a
     , rectY :: a
@@ -15,14 +16,32 @@ data Rect a = Rect
     , rectH :: a
     } deriving (Eq)
 
-type Window = Rect Int
-type Monitor = Rect Int
-type SnapConfig = Rect Float
-
 instance (Show a) => Show (Rect a) where
     show (Rect x y w h) = concat . intersperse " " . map show $ [x,y,w,h]
 
 
+-- Represents a monitor's position and size in the full desktop area.
+type Monitor = Rect Int
+
+-- Represents pixel-based window geometry in the full desktop area.
+type FixedWindow = Rect Int
+
+-- Represents a monitor-independent window geometry. Position and
+-- size are given as fractions of a monitor rather than pixels.
+type GeneralWindow = Rect Float
+
+--------------------------------------------------------------------------------
+
+-- Finds an item in a list, and cycles to the next item.
+getNext :: Eq a => [a] -> a -> a
+getNext []  _ = error "Cannot get next item in empty list"
+getNext [x] _ = x
+getNext list item = list !! nextIndex
+  where
+    index = fromMaybe 0 $ elemIndex item list
+    nextIndex = if index == length list - 1 then 0 else index + 1
+
+--------------------------------------------------------------------------------
 
 panelSize :: Int
 panelSize = 24
@@ -34,7 +53,7 @@ monitors = map parseMonitor [
   where
     parseMonitor (w,h,x,y) = Rect x y w (h - panelSize)
 
-snapConfigs :: [[SnapConfig]]
+snapConfigs :: [[GeneralWindow]]
 snapConfigs =
     -- Top Left
     [ [ Rect 0.0 0.0 0.3333 0.5
@@ -73,7 +92,7 @@ snapConfigs =
       , Rect 0.5    0.5 0.5    0.5
       , Rect 0.3333 0.5 0.6666 0.5 ] ]
 
-
+--------------------------------------------------------------------------------
 
 main :: IO ()
 main = dispatch `liftM` getArgs >>= putStrLn
@@ -85,7 +104,7 @@ dispatch args = case head args of
     "snap" -> show $ snapNext (snapConfigs!!(ints!!0))
                    $ Rect (ints!!1) (ints!!2) (ints!!3) (ints!!4)
 
-    "next" -> show $ nextMonitor
+    "next" -> show $ nextMonitor monitors
                    $ Rect (ints!!0) (ints!!1) (ints!!2) (ints!!3)
 
     x -> error $ "Didn't understand command '" ++ x ++ "'"
@@ -93,23 +112,46 @@ dispatch args = case head args of
   where
     ints = map read $ tail args
 
+--------------------------------------------------------------------------------
 
-snapNext :: [SnapConfig] -> Window -> Window
-snapNext snaps win = applySnap mon newSnap win
+-- When applied to a pixel-based window geometry, this function returns a
+-- resolution-independent window geometry relative to the given monitor.
+getGeneral :: Monitor -> FixedWindow -> GeneralWindow
+getGeneral (Rect mx my mw mh) (Rect fx fy fw fh) =
+    Rect gx gy gw gh
   where
-    mon = fromJust $ whichMonitor win monitors
-    close = closestSnap mon snaps win
-    index = fromJust $ elemIndex close snaps
-    nextIndex = if index == length snaps - 1 then 0 else index + 1
-    newSnap = snaps !! nextIndex
+    gx = fromIntegral (fx - mx) / fromIntegral mw
+    gy = fromIntegral (fy - my) / fromIntegral mh
+    gw = fromIntegral fw / fromIntegral mw
+    gh = fromIntegral fh / fromIntegral mh
 
 
-nextMonitor :: Window -> Window
-nextMonitor = undefined
+-- When applied to a specific monitor and a resolution-independent window
+-- geometry, this returns a conrete window geometry.
+getFixed :: Monitor -> GeneralWindow -> FixedWindow
+getFixed (Rect mx my mw mh) (Rect gx gy gw gh) =
+    Rect fx fy fw fh
+  where
+    fx = (mx +) $ round $ fromIntegral mw * gx
+    fy = (my +) $ round $ fromIntegral mh * gy
+    fw = round $ fromIntegral mw * gw
+    fh = round $ fromIntegral mh * gh
 
 
-whichMonitor :: Window -> [Monitor] -> Maybe Monitor
-whichMonitor win mons =
+-- Given a list of monitors and a fixed window position, this function returns
+-- a window geometry describing the window after being moved to the next monitor
+-- in the list.
+nextMonitor :: [Monitor] -> FixedWindow -> FixedWindow
+nextMonitor mons win =
+    getFixed nextMon $ getGeneral thisMon win
+  where
+    thisMon = fromJust $ whichMonitor mons win
+    nextMon = getNext mons thisMon
+
+
+-- Determines which monitor a given window resides on.
+whichMonitor :: [Monitor] -> FixedWindow -> Maybe Monitor
+whichMonitor mons win =
     listToMaybe $ filter onMon mons
   where
     rectIntCenter (Rect x y w h) = (x + w `quot` 2 , y + h `quot` 2)
@@ -118,22 +160,19 @@ whichMonitor win mons =
                             && wy >= my && wy < my + mh
 
 
-closestSnap :: Monitor -> [SnapConfig] -> Window -> SnapConfig
+
+snapNext :: [GeneralWindow] -> FixedWindow -> FixedWindow
+snapNext snaps win = getFixed mon newSnap
+  where
+    mon = fromJust $ whichMonitor monitors win
+    newSnap = getNext snaps (closestSnap mon snaps win)
+
+
+closestSnap :: Monitor -> [GeneralWindow] -> FixedWindow -> GeneralWindow
 closestSnap mon snaps win =
     fst . head . sortBy (compare `on` snd) . map zipDistance $ snaps
   where
     zipDistance snap = (snap, (abs (x - rectX win) + abs (y - rectY win)
                              + abs (w - rectW win) + abs (h - rectH win)))
-      where (Rect x y w h) = applySnap mon snap win
-
-
-applySnap :: Monitor -> SnapConfig -> Window -> Window
-applySnap (Rect mx my mw mh) (Rect sx sy sw sh) (Rect wx wy ww wh) =
-    Rect x y w h
-  where
-    x = mx + round ((fromIntegral mw) * sx)
-    y = my + round ((fromIntegral mh) * sy)
-    w = round ((fromIntegral mw) * sw)
-    h = round ((fromIntegral mh) * sh)
-
+      where (Rect x y w h) = getFixed mon snap
 
