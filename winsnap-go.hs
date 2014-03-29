@@ -104,6 +104,9 @@ dispatch args = case head args of
     "snap" -> show $ snapNext (snapConfigs!!(ints!!0))
                    $ Rect (ints!!1) (ints!!2) (ints!!3) (ints!!4)
 
+    "move" -> show $ gotoMonitor (ints!!0) monitors
+                   $ Rect (ints!!1) (ints!!2) (ints!!3) (ints!!4)
+
     "next" -> show $ nextMonitor monitors
                    $ Rect (ints!!0) (ints!!1) (ints!!2) (ints!!3)
 
@@ -144,11 +147,23 @@ getFixed (Rect mx my mw mh) (Rect gx gy gw gh) =
 -- a window geometry describing the window after being moved to the next monitor
 -- in the list.
 nextMonitor :: [Monitor] -> FixedWindow -> FixedWindow
-nextMonitor mons win =
+nextMonitor mons win = jumpMonitor getNext mons win
+
+
+-- Moves a window to a specific monitor in the provided monitor list
+gotoMonitor :: Int -> [Monitor] -> FixedWindow -> FixedWindow
+gotoMonitor index mons win = jumpMonitor (\xs _ -> xs !! index) mons win
+
+
+-- Uses a function of monitor list and current monitor to determine a target
+-- monitor to move the provided window to.
+jumpMonitor :: ([Monitor] -> Monitor -> Monitor)
+            -> [Monitor] -> FixedWindow -> FixedWindow
+jumpMonitor selector mons win =
     getFixed nextMon $ getGeneral thisMon win
   where
     thisMon = fromJust $ whichMonitor mons win
-    nextMon = getNext mons thisMon
+    nextMon = selector mons thisMon
 
 
 -- Determines which monitor a given window resides on.

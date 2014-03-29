@@ -25,7 +25,7 @@ move_win () {
     wmctrl -i -r "$1" -e "0,$nx,$ny,$nw,$nh"
 }
 
-do_snap_or_next () {
+do_simple_command () {
     local win=$(xprop -root 32x '\t$0' _NET_ACTIVE_WINDOW | cut -f2)
     get_win_data "$win"
     move_win "$win" $($dir/winsnap-go $1 $2 $x $y $w $h)
@@ -48,11 +48,8 @@ do_swap () {
 }
 
 case "$1" in
-    snap)
-        do_snap_or_next $1 $2
-        ;;
-    next)
-        do_snap_or_next $1 $2
+    snap|next|move)
+        do_simple_command $1 $2
         ;;
     swap)
         do_swap
