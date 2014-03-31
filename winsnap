@@ -43,7 +43,7 @@ get_swap_params () {
 
 do_swap () {
     local params=$(get_swap_params)
-    local new_data=$($dir/winsnap-go swap $params)
+    local new_data=$($dir/winsnap-go swap $1 $2 $params)
     echo "$new_data"
 }
 
@@ -52,7 +52,7 @@ case "$1" in
         do_simple_command $1 $2
         ;;
     swap)
-        do_swap
+        do_swap $2 $3
         ;;
 esac
 
